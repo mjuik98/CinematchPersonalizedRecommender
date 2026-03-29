@@ -166,7 +166,6 @@ cinematch_personalized_recommender/
 - [이력서 bullet](docs/resume_bullets.md)
 - [데모 스크립트](docs/demo_script.md)
 - [면접 Q&A](docs/interview_qa.md)
-- [GitHub 업로드 가이드](docs/github_publish_guide.md)
 - [샘플 평가 리포트](docs/sample_eval_report.html)
 - [최종 제출 체크리스트](docs/final_submission_checklist.md)
 - [검증 기록](docs/validation_report.md)
