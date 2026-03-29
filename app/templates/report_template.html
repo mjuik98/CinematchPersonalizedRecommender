@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>{{ title }}</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2rem; color: #222; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 2rem; }
+    th, td { border-bottom: 1px solid #e5e5e5; padding: 0.5rem; text-align: left; }
+    .chart { margin: 1rem 0 2rem; }
+    .muted { color: #666; }
+  </style>
+</head>
+<body>
+  <h1>{{ title }}</h1>
+  <p class="muted">Generated at {{ generated_at }} · Dataset: {{ dataset_source }} · Top-K: {{ top_k }}</p>
+
+  <h2>Model comparison</h2>
+  <table>
+    <thead>
+      <tr>
+        {% for key in metrics_table[0].keys() %}
+        <th>{{ key }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in metrics_table %}
+      <tr>
+        {% for value in row.values() %}
+        <td>{{ value }}</td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="chart">
+    <h2>Relevance metrics</h2>
+    <img src="data:image/png;base64,{{ relevance_chart }}" alt="Relevance chart" width="900"/>
+  </div>
+
+  <div class="chart">
+    <h2>Catalog and diversity metrics</h2>
+    <img src="data:image/png;base64,{{ business_chart }}" alt="Business chart" width="900"/>
+  </div>
+
+  <h2>Run metadata</h2>
+  <pre>{{ metadata }}</pre>
+</body>
+</html>

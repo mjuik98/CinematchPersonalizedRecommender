@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <title>CineMatch Personalized Recommender</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2rem; color: #222; }
+    h1, h2 { margin-bottom: 0.5rem; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    .card { border: 1px solid #ddd; border-radius: 12px; padding: 1rem; background: #fafafa; }
+    .metrics table { width: 100%; border-collapse: collapse; }
+    .metrics th, .metrics td { border-bottom: 1px solid #eee; padding: 0.4rem; text-align: left; }
+    input, select, button { padding: 0.45rem; margin-right: 0.4rem; }
+    .recommendation { border: 1px solid #e4e4e4; border-radius: 10px; padding: 0.75rem; margin-bottom: 0.75rem; background: white; }
+    .muted { color: #666; }
+    code { background: #f2f2f2; padding: 0.15rem 0.3rem; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <h1>CineMatch: 다단계 개인화 추천 시스템</h1>
+  <p class="muted">MovieLens 기반 최종 포트폴리오 프로젝트. 협업 필터링 후보 생성 → 메타데이터 기반 재랭킹 → 다양성 리랭킹 → API 서빙/로그 분석까지 포함합니다.</p>
+
+  <div class="grid">
+    <div class="card">
+      <h2>추천 요청</h2>
+      <p>예시 사용자 ID: <code>{{ example_user_id }}</code></p>
+      <label>사용자 ID <input id="userId" value="{{ example_user_id }}" /></label>
+      <label>Top-K <input id="topK" type="number" value="10" min="1" max="20" /></label>
+      <label>다양성 λ <input id="lambda" type="number" value="0.88" step="0.01" min="0" max="1" /></label>
+      <button onclick="fetchRecommendations()">추천 받기</button>
+      <div id="results" style="margin-top: 1rem;"></div>
+    </div>
+
+    <div class="card metrics">
+      <h2>최근 평가 요약</h2>
+      <table>
+        <thead><tr><th>모델</th><th>Hit@K</th><th>NDCG@K</th><th>Coverage</th><th>Diversity</th></tr></thead>
+        <tbody>
+          {% for row in metrics %}
+          <tr>
+            <td>{{ row.model }}</td>
+            <td>{{ "%.4f"|format(row["hit_rate@k"]) }}</td>
+            <td>{{ "%.4f"|format(row["ndcg@k"]) }}</td>
+            <td>{{ "%.4f"|format(row["coverage"]) }}</td>
+            <td>{{ "%.4f"|format(row["diversity"]) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <p class="muted">데이터셋: {{ metadata.dataset_source }} / 사용자 수: {{ metadata.user_count }} / 아이템 수: {{ metadata.item_count }}</p>
+    </div>
+  </div>
+
+  <div class="grid" style="margin-top:1.5rem;">
+    <div class="card">
+      <h2>콜드스타트 추천</h2>
+      <label>연령대 <input id="ageBucket" value="25-34" /></label>
+      <label>성별 <input id="gender" value="F" /></label>
+      <label>선호 장르(csv) <input id="favoriteGenres" value="Drama,Romance" /></label>
+      <button onclick="fetchColdStart()">프로필 추천</button>
+      <div id="coldResults" style="margin-top: 1rem;"></div>
+    </div>
+
+    <div class="card">
+      <h2>프로젝트 포인트</h2>
+      <ul>
+        <li>MovieLens 1M 안정 벤치마크 기준으로 학습/평가 가능</li>
+        <li>협업 필터링 + 콘텐츠 특징 + 다양성 리랭킹 결합</li>
+        <li>Hit@K, MRR, NDCG 외 Coverage/Novelty/Diversity/Personalization 제공</li>
+        <li>FastAPI, SQLite 로그, Docker, unittest, GitHub Actions 포함</li>
+      </ul>
+    </div>
+  </div>
+
+<script>
+async function fetchRecommendations() {
+  const userId = document.getElementById("userId").value;
+  const topK = document.getElementById("topK").value;
+  const lambdaVal = document.getElementById("lambda").value;
+  const res = await fetch(`/users/${userId}/recommendations?top_k=${topK}&diversity_lambda=${lambdaVal}`);
+  const data = await res.json();
+  renderCards("results", data.recommendations);
+}
+
+async function fetchColdStart() {
+  const payload = {
+    age_bucket: document.getElementById("ageBucket").value,
+    gender: document.getElementById("gender").value,
+    favorite_genres: document.getElementById("favoriteGenres").value.split(",").map(s => s.trim()).filter(Boolean),
+    top_k: 10
+  };
+  const res = await fetch(`/cold-start/recommendations`, {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify(payload)
+  });
+  const data = await res.json();
+  renderCards("coldResults", data.recommendations);
+}
+
+function renderCards(containerId, rows) {
+  const el = document.getElementById(containerId);
+  if (!rows || rows.length === 0) {
+    el.innerHTML = "<p>추천 결과가 없습니다.</p>";
+    return;
+  }
+  el.innerHTML = rows.map(row => `
+    <div class="recommendation">
+      <strong>${row.title}</strong> <span class="muted">(${row.year})</span><br/>
+      <span>${row.genres.join(", ")}</span><br/>
+      <span class="muted">score: ${row.score.toFixed(4)}</span>
+      <ul>${row.reasons.map(reason => `<li>${reason}</li>`).join("")}</ul>
+    </div>
+  `).join("");
+}
+</script>
+</body>
+</html>

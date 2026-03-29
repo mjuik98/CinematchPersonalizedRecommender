@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.pyc
+storage/raw/*
+!storage/raw/.gitkeep
+storage/processed/*
+!storage/processed/.gitkeep
+storage/artifacts/*
+!storage/artifacts/.gitkeep
+storage/reports/*
+!storage/reports/.gitkeep
+storage/logs/*
+!storage/logs/.gitkeep
+.env
