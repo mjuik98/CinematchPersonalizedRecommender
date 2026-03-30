@@ -2,117 +2,361 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
-  <title>CineMatch Personalized Recommender</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CineMatch | 프리미엄 개인화 추천 시스템</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: Arial, sans-serif; margin: 2rem; color: #222; }
-    h1, h2 { margin-bottom: 0.5rem; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-    .card { border: 1px solid #ddd; border-radius: 12px; padding: 1rem; background: #fafafa; }
-    .metrics table { width: 100%; border-collapse: collapse; }
-    .metrics th, .metrics td { border-bottom: 1px solid #eee; padding: 0.4rem; text-align: left; }
-    input, select, button { padding: 0.45rem; margin-right: 0.4rem; }
-    .recommendation { border: 1px solid #e4e4e4; border-radius: 10px; padding: 0.75rem; margin-bottom: 0.75rem; background: white; }
-    .muted { color: #666; }
-    code { background: #f2f2f2; padding: 0.15rem 0.3rem; border-radius: 6px; }
+    :root {
+      --bg-color: #0b0e14;
+      --card-bg: rgba(255, 255, 255, 0.05);
+      --card-border: rgba(255, 255, 255, 0.1);
+      --accent-color: #8b5cf6;
+      --accent-gradient: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --success: #10b981;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 2rem;
+      min-height: 100vh;
+    }
+
+    .container { max-width: 1200px; margin: 0 auto; }
+
+    header { margin-bottom: 3rem; text-align: center; }
+    h1 {
+      font-size: 3rem;
+      font-weight: 700;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+    .subtitle { color: var(--text-muted); font-size: 1.1rem; max-width: 700px; margin: 0 auto; }
+
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+    .card {
+      background: var(--card-bg);
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 2rem;
+      transition: transform 0.3s ease, border-color 0.3s ease;
+    }
+    .card:hover { border-color: rgba(139, 92, 246, 0.4); }
+
+    h2 { font-size: 1.5rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; }
+    
+    /* Tooltip */
+    .info-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+      font-size: 11px;
+      cursor: help;
+      position: relative;
+      color: var(--text-muted);
+      vertical-align: middle;
+      margin-left: 4px;
+    }
+    .info-icon:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 125%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1e293b;
+      color: white;
+      padding: 0.75rem;
+      border-radius: 12px;
+      width: 250px;
+      font-size: 0.85rem;
+      font-weight: 400;
+      z-index: 100;
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5);
+      border: 1px solid var(--card-border);
+      text-align: center;
+    }
+
+    .input-group { margin-bottom: 1.25rem; }
+    label { display: block; color: var(--text-muted); margin-bottom: 0.5rem; font-size: 0.9rem; }
+    input, select {
+      width: 100%;
+      padding: 0.8rem 1rem;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      color: white;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus { border-color: var(--accent-color); }
+
+    button {
+      width: 100%;
+      padding: 1rem;
+      background: var(--accent-gradient);
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+    button:hover { opacity: 0.9; transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th { text-align: left; color: var(--text-muted); font-weight: 400; font-size: 0.85rem; padding-bottom: 1rem; }
+    td { padding: 1rem 0; border-top: 1px solid var(--card-border); font-variant-numeric: tabular-nums; }
+    .model-name { font-weight: 600; color: var(--accent-color); }
+
+    .recommendation {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      animation: fadeIn 0.5s ease-out both;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .rec-title { font-size: 1.1rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.25rem; }
+    .rec-meta { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem; }
+    .rec-reason { list-style: none; display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+    .reason-tag {
+      background: rgba(139, 92, 246, 0.15);
+      color: #c084fc;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .metadata-footer { margin-top: 1rem; font-size: 0.8rem; color: var(--text-muted); display: flex; gap: 1rem; justify-content: center; }
+    .loading-text { color: var(--text-muted); }
+    .error-text { color: #ef4444; }
+    .rec-item { animation-fill-mode: both; }
+    .score-tag { background: rgba(16, 185, 129, 0.1); color: #34d399; margin-left: auto; }
+    .cold-start-desc { text-align: left; font-size: 0.9rem; margin-bottom: 1.5rem; }
+    .flex-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
   </style>
 </head>
 <body>
-  <h1>CineMatch: 다단계 개인화 추천 시스템</h1>
-  <p class="muted">MovieLens 기반 최종 포트폴리오 프로젝트. 협업 필터링 후보 생성 → 메타데이터 기반 재랭킹 → 다양성 리랭킹 → API 서빙/로그 분석까지 포함합니다.</p>
+  <div class="container">
+    <header>
+      <h1>CineMatch</h1>
+      <p class="subtitle">개인화 추천 시스템의 전 과정을 경험해 보세요. 영화 메타데이터와 사용자 행동 로그를 기반으로 가장 적합한 콘텐츠를 찾아드립니다.</p>
+    </header>
 
-  <div class="grid">
-    <div class="card">
-      <h2>추천 요청</h2>
-      <p>예시 사용자 ID: <code>{{ example_user_id }}</code></p>
-      <label>사용자 ID <input id="userId" value="{{ example_user_id }}" /></label>
-      <label>Top-K <input id="topK" type="number" value="10" min="1" max="20" /></label>
-      <label>다양성 λ <input id="lambda" type="number" value="0.88" step="0.01" min="0" max="1" /></label>
-      <button onclick="fetchRecommendations()">추천 받기</button>
-      <div id="results" style="margin-top: 1rem;"></div>
+    <div class="grid">
+      <!-- 추천 요청 섹션 -->
+      <div class="card">
+        <h2>✨ 스마트 추천 받기</h2>
+        <div class="input-group">
+          <label for="userId">사용자 ID (예: {{ example_user_id }})</label>
+          <input id="userId" value="{{ example_user_id }}" placeholder="ID를 입력하세요" title="사용자 고유 식별자" />
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+          <div class="input-group">
+            <label for="topK">추천 개수 (Top-K)</label>
+            <input id="topK" type="number" value="10" min="1" max="20" title="결과물 개수 설정" />
+          </div>
+          <div class="input-group">
+            <label for="lambda">
+              다양성 정도 (λ)
+              <span class="info-icon" data-tooltip="높을수록 다양한 장르의 영화가 섞여서 나옵니다.">?</span>
+            </label>
+            <input id="lambda" type="number" value="0.88" step="0.01" min="0" max="1" title="다양성 가중치 설정" />
+          </div>
+        </div>
+        <button onclick="fetchRecommendations()">분석 및 추천 시작</button>
+        <div id="results" style="margin-top: 2rem;"></div>
+      </div>
+
+      <!-- 모델 성능 요약 섹션 -->
+      <div class="card">
+        <h2>📊 모델 성능 (오프라인 평가)</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>모델</th>
+              <th>
+                적중률
+                <span class="info-icon" data-tooltip="HitRate@K: 사용자가 실제로 좋아한 영화가 상위 K개 안에 포함될 확률">?</span>
+              </th>
+              <th>
+                순위 점수
+                <span class="info-icon" data-tooltip="NDCG@K: 관련성 높은 영화가 리스트 앞쪽에 더 잘 배치되었는지 평가">?</span>
+              </th>
+              <th>
+                노출 범위
+                <span class="info-icon" data-tooltip="Coverage: 전체 아이템 중 실제 추천에 사용된 아이템의 비율">?</span>
+              </th>
+              <th>
+                다양성
+                <span class="info-icon" data-tooltip="Diversity: 추천된 영화들이 서로 얼마나 다양한 특징(장르 등)을 가졌는지 측정">?</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in metrics %}
+            <tr>
+              <td class="model-name">{{ row.model }}</td>
+              <td>{{ "%.4f"|format(row["hit_rate@k"]) }}</td>
+              <td>{{ "%.4f"|format(row["ndcg@k"]) }}</td>
+              <td>{{ "%.4f"|format(row["coverage"]) }}</td>
+              <td>{{ "%.4f"|format(row["diversity"]) }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        <div class="metadata-footer">
+          <span>📅 {{ metadata.dataset_source }}</span>
+          <span>👤 {{ metadata.user_count }} 명</span>
+          <span>🎬 {{ metadata.item_count }} 편</span>
+        </div>
+      </div>
     </div>
 
-    <div class="card metrics">
-      <h2>최근 평가 요약</h2>
-      <table>
-        <thead><tr><th>모델</th><th>Hit@K</th><th>NDCG@K</th><th>Coverage</th><th>Diversity</th></tr></thead>
-        <tbody>
-          {% for row in metrics %}
-          <tr>
-            <td>{{ row.model }}</td>
-            <td>{{ "%.4f"|format(row["hit_rate@k"]) }}</td>
-            <td>{{ "%.4f"|format(row["ndcg@k"]) }}</td>
-            <td>{{ "%.4f"|format(row["coverage"]) }}</td>
-            <td>{{ "%.4f"|format(row["diversity"]) }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-      <p class="muted">데이터셋: {{ metadata.dataset_source }} / 사용자 수: {{ metadata.user_count }} / 아이템 수: {{ metadata.item_count }}</p>
+    <div class="grid">
+      <!-- 콜드스타트 섹션 -->
+      <div class="card">
+        <h2>🧊 신규 사용자 프로필 추천</h2>
+        <p class="subtitle cold-start-desc">활동 기록이 없는 사용자를 위해 연령/성별/장르 취향 기반으로 추천을 생성합니다.</p>
+        <div class="flex-row">
+          <div class="input-group">
+            <label for="ageBucket">연령대</label>
+            <select id="ageBucket" title="사용자 연령대 그룹 선택">
+              <option value="18-24">18-24세</option>
+              <option value="25-34" selected>25-34세</option>
+              <option value="35-44">35-44세</option>
+              <option value="45-49">45-49세</option>
+              <option value="50-55">50-55세</option>
+              <option value="56+">56세 이상</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label for="gender">성별</label>
+            <select id="gender" title="사용자 성별 선택">
+              <option value="M">남성</option>
+              <option value="F" selected>여성</option>
+            </select>
+          </div>
+        </div>
+        <div class="input-group">
+          <label for="favoriteGenres">선호 장르 (쉼표로 구분)</label>
+          <input id="favoriteGenres" value="Drama, Romance" placeholder="예: Action, Comedy, Horror" title="관심 있는 장르 목록" />
+        </div>
+        <button onclick="fetchColdStart()">취향 분석 결과 보기</button>
+        <div id="coldResults" style="margin-top: 2rem;"></div>
+      </div>
+
+      <!-- 프로젝트 하이라이트 -->
+      <div class="card">
+        <h2>🚀 시스템 사양 및 특징</h2>
+        <div style="color: var(--text-muted); font-size: 0.95rem;">
+          <p style="margin-bottom: 1rem;">CineMatch는 단순한 필터링을 넘어선 <strong>다단계 추천 파이프라인</strong>을 갖추고 있습니다.</p>
+          <ul style="list-style: none;">
+            <li style="margin-bottom: 0.75rem; display: flex; gap: 0.75rem;">
+              <span style="color: var(--success);">✓</span>
+              <span><strong>Latent Retriever:</strong> SVD 기반의 잠재 요인 분석을 통한 빠른 후보 검색</span>
+            </li>
+            <li style="margin-bottom: 0.75rem; display: flex; gap: 0.75rem;">
+              <span style="color: var(--success);">✓</span>
+              <span><strong>Feature-based Ranking:</strong> 사용자 메타데이터와 장르 적합성을 반영한 로지스틱 회귀 랭킹</span>
+            </li>
+            <li style="margin-bottom: 0.75rem; display: flex; gap: 0.75rem;">
+              <span style="color: var(--success);">✓</span>
+              <span><strong>MMR Reranking:</strong> 추천 리스트 내 중복 장르 비중을 조절하는 다양성 최적화</span>
+            </li>
+            <li style="margin-bottom: 0.75rem; display: flex; gap: 0.75rem;">
+              <span style="color: var(--success);">✓</span>
+              <span><strong>Live Logging:</strong> SQLite를 활용한 추천 및 피드백 로그 실시간 저장</span>
+            </li>
+          </ul>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="grid" style="margin-top:1.5rem;">
-    <div class="card">
-      <h2>콜드스타트 추천</h2>
-      <label>연령대 <input id="ageBucket" value="25-34" /></label>
-      <label>성별 <input id="gender" value="F" /></label>
-      <label>선호 장르(csv) <input id="favoriteGenres" value="Drama,Romance" /></label>
-      <button onclick="fetchColdStart()">프로필 추천</button>
-      <div id="coldResults" style="margin-top: 1rem;"></div>
-    </div>
+  <script>
+    async function fetchRecommendations() {
+      const container = document.getElementById("results");
+      container.innerHTML = `<p class="loading-text">CineMatch 엔진이 데이터를 분석 중입니다...</p>`;
+      
+      const userId = document.getElementById("userId").value;
+      const topK = document.getElementById("topK").value;
+      const lambdaVal = document.getElementById("lambda").value;
+      
+      try {
+        const res = await fetch(`/users/${userId}/recommendations?top_k=${topK}&diversity_lambda=${lambdaVal}`);
+        if (!res.ok) throw new Error("API Failure");
+        const data = await res.json();
+        renderCards("results", data.recommendations);
+      } catch (err) {
+        container.innerHTML = `<p class="error-text">사용자를 찾을 수 없거나 분석 중 오류가 발생했습니다.</p>`;
+      }
+    }
 
-    <div class="card">
-      <h2>프로젝트 포인트</h2>
-      <ul>
-        <li>MovieLens 1M 안정 벤치마크 기준으로 학습/평가 가능</li>
-        <li>협업 필터링 + 콘텐츠 특징 + 다양성 리랭킹 결합</li>
-        <li>Hit@K, MRR, NDCG 외 Coverage/Novelty/Diversity/Personalization 제공</li>
-        <li>FastAPI, SQLite 로그, Docker, unittest, GitHub Actions 포함</li>
-      </ul>
-    </div>
-  </div>
+    async function fetchColdStart() {
+      const container = document.getElementById("coldResults");
+      container.innerHTML = `<p class="loading-text">프로필 기반 최적 추천을 생성 중입니다...</p>`;
 
-<script>
-async function fetchRecommendations() {
-  const userId = document.getElementById("userId").value;
-  const topK = document.getElementById("topK").value;
-  const lambdaVal = document.getElementById("lambda").value;
-  const res = await fetch(`/users/${userId}/recommendations?top_k=${topK}&diversity_lambda=${lambdaVal}`);
-  const data = await res.json();
-  renderCards("results", data.recommendations);
-}
+      const payload = {
+        age_bucket: document.getElementById("ageBucket").value,
+        gender: document.getElementById("gender").value,
+        favorite_genres: document.getElementById("favoriteGenres").value.split(",").map(s => s.trim()).filter(Boolean),
+        top_k: 10
+      };
+      
+      try {
+        const res = await fetch(`/cold-start/recommendations`, {
+          method: "POST",
+          headers: {"Content-Type":"application/json"},
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        renderCards("coldResults", data.recommendations);
+      } catch (err) {
+        container.innerHTML = `<p class="error-text">오류가 발생했습니다. 정보를 확인해 주세요.</p>`;
+      }
+    }
 
-async function fetchColdStart() {
-  const payload = {
-    age_bucket: document.getElementById("ageBucket").value,
-    gender: document.getElementById("gender").value,
-    favorite_genres: document.getElementById("favoriteGenres").value.split(",").map(s => s.trim()).filter(Boolean),
-    top_k: 10
-  };
-  const res = await fetch(`/cold-start/recommendations`, {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify(payload)
-  });
-  const data = await res.json();
-  renderCards("coldResults", data.recommendations);
-}
-
-function renderCards(containerId, rows) {
-  const el = document.getElementById(containerId);
-  if (!rows || rows.length === 0) {
-    el.innerHTML = "<p>추천 결과가 없습니다.</p>";
-    return;
-  }
-  el.innerHTML = rows.map(row => `
-    <div class="recommendation">
-      <strong>${row.title}</strong> <span class="muted">(${row.year})</span><br/>
-      <span>${row.genres.join(", ")}</span><br/>
-      <span class="muted">score: ${row.score.toFixed(4)}</span>
-      <ul>${row.reasons.map(reason => `<li>${reason}</li>`).join("")}</ul>
-    </div>
-  `).join("");
-}
-</script>
+    function renderCards(containerId, rows) {
+      const el = document.getElementById(containerId);
+      if (!rows || rows.length === 0) {
+        el.innerHTML = `<p class="loading-text">추천 결과가 없습니다.</p>`;
+        return;
+      }
+      el.innerHTML = rows.map((row, idx) => `
+        <div class="recommendation rec-item" style="animation-delay: ${idx * 0.05}s">
+          <div class="rec-title">${row.title} <span style="font-weight: 300; opacity: 0.6">(${row.year})</span></div>
+          <div class="rec-meta">${row.genres.join(" • ")}</div>
+          <div class="rec-reason">
+            ${row.reasons.map(reason => `<span class="reason-tag">${reason}</span>`).join("")}
+            <span class="reason-tag score-tag">Score: ${row.score.toFixed(3)}</span>
+          </div>
+        </div>
+      `).join("");
+    }
+  </script>
 </body>
 </html>

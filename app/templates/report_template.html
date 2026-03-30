@@ -1,51 +1,104 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
   <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{ title }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: Arial, sans-serif; margin: 2rem; color: #222; }
-    table { width: 100%; border-collapse: collapse; margin-bottom: 2rem; }
-    th, td { border-bottom: 1px solid #e5e5e5; padding: 0.5rem; text-align: left; }
-    .chart { margin: 1rem 0 2rem; }
-    .muted { color: #666; }
+    :root {
+      --bg-color: #0b0e14;
+      --card-bg: rgba(255, 255, 255, 0.05);
+      --card-border: rgba(255, 255, 255, 0.1);
+      --accent-color: #8b5cf6;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      margin: 3rem;
+      line-height: 1.6;
+    }
+    header { border-bottom: 1px solid var(--card-border); padding-bottom: 2rem; margin-bottom: 3.5rem; }
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .muted { color: var(--text-muted); font-size: 0.95rem; }
+    
+    h2 { font-size: 1.5rem; margin: 3rem 0 1.5rem; color: var(--accent-color); font-weight: 600; }
+    
+    table { width: 100%; border-collapse: collapse; background: var(--card-bg); border-radius: 16px; overflow: hidden; border: 1px solid var(--card-border); margin-bottom: 3rem; }
+    th { background: rgba(255,255,255,0.02); text-align: left; padding: 1.25rem 1rem; color: var(--text-muted); font-weight: 500; font-size: 0.9rem; text-transform: capitalize; border-bottom: 1px solid var(--card-border); }
+    td { padding: 1.25rem 1rem; border-bottom: 1px solid var(--card-border); font-variant-numeric: tabular-nums; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.01); }
+
+    .chart-container { background: var(--card-bg); padding: 2rem; border-radius: 20px; border: 1px solid var(--card-border); margin-bottom: 2rem; display: flex; flex-direction: column; align-items: center; }
+    .chart-container img { max-width: 100%; height: auto; border-radius: 12px; filter: drop-shadow(0 0 10px rgba(0,0,0,0.3)); }
+
+    pre { background: #1e293b; padding: 1.5rem; border-radius: 12px; overflow-x: auto; color: #cbd5e1; font-family: 'Courier New', Courier, monospace; font-size: 0.85rem; border: 1px solid var(--card-border); }
+    
+    .status-badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 20px; background: rgba(139, 92, 246, 0.15); color: #c084fc; font-size: 0.8rem; font-weight: 500; margin-left: 1rem; }
   </style>
 </head>
 <body>
-  <h1>{{ title }}</h1>
-  <p class="muted">Generated at {{ generated_at }} · Dataset: {{ dataset_source }} · Top-K: {{ top_k }}</p>
+  <header>
+    <h1>{{ title }} <span class="status-badge">Auto-Generated</span></h1>
+    <p class="muted">생성 일시: {{ generated_at }} · 데이터셋: {{ dataset_source }} · Top-K: {{ top_k }}</p>
+  </header>
 
-  <h2>Model comparison</h2>
-  <table>
-    <thead>
-      <tr>
-        {% for key in metrics_table[0].keys() %}
-        <th>{{ key }}</th>
+  <section>
+    <h2>📊 모델별 성능 비교 (Model comparison)</h2>
+    <table>
+      <thead>
+        <tr>
+          {% for key in metrics_table[0].keys() %}
+          <th>{{ key.replace('_', ' ') }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in metrics_table %}
+        <tr>
+          {% for value in row.values() %}
+          <td {% if loop.first %}style="font-weight: 600; color: var(--accent-color);"{% endif %}>
+            {{ value if value is not none else '-' }}
+          </td>
+          {% endfor %}
+        </tr>
         {% endfor %}
-      </tr>
-    </thead>
-    <tbody>
-      {% for row in metrics_table %}
-      <tr>
-        {% for value in row.values() %}
-        <td>{{ value }}</td>
-        {% endfor %}
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+      </tbody>
+    </table>
+  </section>
 
-  <div class="chart">
-    <h2>Relevance metrics</h2>
-    <img src="data:image/png;base64,{{ relevance_chart }}" alt="Relevance chart" width="900"/>
-  </div>
+  <section>
+    <h2>🎯 Relevance Metrics</h2>
+    <div class="chart-container">
+      <img src="data:image/png;base64,{{ relevance_chart }}" alt="Relevance chart"/>
+      <p class="muted" style="margin-top: 1rem;">적중률(HitRate), 순위편향(NDCG) 등 정확도 중심 지표</p>
+    </div>
+  </section>
 
-  <div class="chart">
-    <h2>Catalog and diversity metrics</h2>
-    <img src="data:image/png;base64,{{ business_chart }}" alt="Business chart" width="900"/>
-  </div>
+  <section>
+    <h2>🏢 Catalog & Diversity Metrics</h2>
+    <div class="chart-container">
+      <img src="data:image/png;base64,{{ business_chart }}" alt="Business chart"/>
+      <p class="muted" style="margin-top: 1rem;">노출 범위(Coverage), 다양성(Diversity) 등 비즈니스 중심 지표</p>
+    </div>
+  </section>
 
-  <h2>Run metadata</h2>
-  <pre>{{ metadata }}</pre>
+  <section>
+    <h2>🔧 실행 메타데이터 (Run metadata)</h2>
+    <pre>{{ metadata }}</pre>
+  </section>
 </body>
 </html>
